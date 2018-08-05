@@ -7,6 +7,7 @@
 import logging
 import os
 import re
+from distutils.log import warn as printf
 import scrapy
 from scrapy.crawler import CrawlerRunner
 from scrapy.http import Request, Headers
@@ -20,6 +21,7 @@ logging.getLogger('scrapy.core.engine').setLevel(logging.ERROR)
 logging.getLogger('scrapy.core.scraper').setLevel(logging.ERROR)
 
 UA = 'Mozilla/5.0 (Windows NT 10.0;) Gecko/20100101 Firefox/57.0'
+
 
 class MM131Spider(scrapy.Spider):
 
@@ -65,14 +67,14 @@ class MM131Spider(scrapy.Spider):
         item['img_url'] = response.css(".content-pic img::attr(src)").extract()
         item['headers'] = {
             'Referer': response.url,
-            'User-Agent': UA
+            'User-Agent': UA.ch
         }
         store_path = response.url[21: -5]
         if store_path.find('_') > 0:
             store_path = store_path[:store_path.find('_')]
 
         item['store_path'] = store_path
-        print item['store_path']
+        printf(item['store_path'])
 
         yield item
 
@@ -107,7 +109,7 @@ class SpiderMiddleware(object):
         # if request.meta and 'headers' in request.meta:
         #     request.headers = Headers(request.meta['headers'])
 
-        print u'【REQUEST】:', request.url, request.headers
+        printf('【REQUEST】: %s, %s', request.url, request.headers)
         return None
 
 
@@ -132,10 +134,10 @@ class ImagesPipeline(ImagesPipeline):
             open(readme_text_file_path, 'w').close()
 
         if os.path.exists(os.path.join(parent_store_path, filename)):
-            print u'Resources already exist '
-            raise IgnoreRequest
+            printf('Resources already exist ')
+            raise IgnoreRequest('Resources already exist ')
         else:
-            print 'download ' + filename
+            printf('download ' + filename)
 
         return filename
 
@@ -174,7 +176,7 @@ if __name__ == '__main__':
     }
     settings = Settings()
     settings.setdict(customer_settings)
-    print settings.getdict('DOWNLOADER_MIDDLEWARES')
+    printf(settings.getdict('DOWNLOADER_MIDDLEWARES'))
     configure_logging(settings)
     runner = CrawlerRunner(settings)
     runner.crawl(MM131Spider)
